@@ -1,0 +1,8 @@
+requests
+httpx
+beautifulsoup4
+lxml
+selenium
+webdriver-manager
+pandas
+apify_client
