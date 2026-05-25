@@ -1,33 +1,58 @@
-import requests
 import os
 from dotenv import load_dotenv
 from apify_client import ApifyClient
+
 load_dotenv()
 
 APIFY_KEY = os.getenv("APIFY_KEY")
 
+
 def scrape_linkedin_company(company_name):
+    if not APIFY_KEY:
+        raise ValueError("APIFY_KEY not found in environment variables.")
+
     client = ApifyClient(APIFY_KEY)
 
-    # Prepare the Actor input
+    # Fixed Input Schema according to harvestapi/linkedin-company-search
     run_input = {
-    "maxItems": 1,
-    "scraperMode": "short"
-}
+        "searchQuery": company_name,  # Correct parameter name
+        "maxItems": 1,
+        "scraperMode": "short"
+    }
+
+    print(f"Starting Apify Actor for: {company_name}...")
 
     # Run the Actor and wait for it to finish
     run = client.actor("taHaRcqil3scbchuI").call(run_input=run_input)
 
-    # Fetch and print Actor results from the run's dataset (if there are any)
-    for item in client.dataset(run["defaultDatasetId"]).iterate_items():
-        print(item)
-    return client.dataset(run["defaultDatasetId"]).items
+    if not run:
+        print("Actor run failed to start.")
+        return []
+
+    # Fixed: Use object dot notation (.default_dataset_id) instead of subscripting
+    dataset_id = run.default_dataset_id
+
+    # Fetch results from the dataset
+    dataset_items = client.dataset(dataset_id).list_items().items
+    return dataset_items
+
+
 if __name__ == "__main__":
     company_name = "actia-engineering-services"
 
-    result = scrape_linkedin_company(company_name)
+    result_list = scrape_linkedin_company(company_name)
 
-    if result:
+    if result_list:
+        # Extract the first matching company found from the search array
+        result = result_list[0]
+
         print("\n=== Extracted Data ===")
-        print(f"Employees: {result['Employee Count']}")
-        print(f"Description: {result['Description'][:300]}...")  # Truncated print
+        # Note: HarvestAPI outputs camelCase fields or specific strings depending on mode.
+        # It's safest to use .get() to avoid throwing errors if fields are missing.
+        print(f"Company Name: {result.get('companyName', 'N/A')}")
+        print(f"Staff Count: {result.get('secondarySubtitle', 'N/A')}")
+
+        description = result.get('summary', result.get('Description', 'No description available.'))
+        print(f"Description: {description[:300]}...")
+    else:
+        print("\nNo data returned from the scraper.")

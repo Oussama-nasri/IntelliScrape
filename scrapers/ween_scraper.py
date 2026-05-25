@@ -33,6 +33,3 @@ def get_company_description_ween(company_slug):
     except requests.exceptions.RequestException as e:
         print(f"[{company_slug}] A network error occurred: {e}")
         return None
-
-desc = get_company_description_ween("tis-thyna-des-industries-specialisees")
-print(desc)
