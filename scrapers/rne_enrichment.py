@@ -45,7 +45,7 @@ def create_driver(headless: bool = True) -> webdriver.Chrome:
 def search_rne(driver: webdriver.Chrome, company_name: str) -> dict:
     """
     Searches the RNE portal for `company_name`.
-    Returns a dict with enrichment fields (empty strings if not found).
+    Returns a dict with enrichment fields (empty strings if ).
     """
     result = {
         "name":             company_name,
@@ -114,7 +114,7 @@ def enrich_from_csv(input_csv: str = INDUSTRIAL_CSV,
         limit:      Cap the number of companies to process (None = all).
     """
     if not os.path.exists(input_csv):
-        print(f"[rne] Input CSV not found: {input_csv}")
+        print(f"[rne] Input CSV : {input_csv}")
         return
 
     # Load company names from the input CSV

@@ -6,3 +6,9 @@ selenium
 webdriver-manager
 pandas
 apify-client
+serpapi
+python-dotenv
+playwright
+playwright_stealth
+
+fake-useragent

@@ -21,7 +21,7 @@ def get_company_description_ween(company_slug):
                 return apropos_div.get_text(separator=" ", strip=True)
             else:
                 print(
-                    f"[{company_slug}] 'aprop-empty' class not found on page."
+                    f"[{company_slug}] 'aprop-empty' class  on page."
                 )
                 return None
         else:
