@@ -22,6 +22,11 @@
     </div>
 
     <ul class="nav-links">
+      <li>
+  <a href="#" class="nav-item" data-view="agent">
+    <span class="nav-icon">◆</span> Agent
+  </a>
+</li>
       <li><a href="#" class="nav-item active" data-view="pipeline">
         <span class="nav-icon">⬡</span> Pipeline
       </a></li>
@@ -374,6 +379,43 @@
       </div>
     </section>
 
+    <section class="view" id="view-agent">
+
+  <div class="view-header">
+    <h1>AI Agent</h1>
+    <p class="view-subtitle">Ask anything about the companies database</p>
+  </div>
+
+  <!-- Message thread ---------------------------------------------------- -->
+  <div class="agent-thread" id="agent-thread" aria-live="polite" aria-label="Conversation">
+    <!-- Seed message so the thread isn't empty on first load -->
+    <div class="msg msg--agent">
+      <div class="msg-body">
+        <p>Bonjour ! Ask me anything about Tunisian industrial companies — by region,
+           sector, size, or any other criteria.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky input bar -------------------------------------------------- -->
+  <div class="agent-input-bar">
+    <textarea
+      id="agent-input"
+      rows="1"
+      placeholder="Ask about companies…"
+      aria-label="Your question"
+    ></textarea>
+    <button id="btn-agent-send" class="btn-send" aria-label="Send">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+
+</section>
   </main>
 
   <!-- ── Company detail modal ── -->

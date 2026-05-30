@@ -9,6 +9,9 @@ from sqlalchemy.exc import OperationalError
 from app.db.session import init_db, engine
 from app.api.scrape import router as scrape_router
 from app.api.companies import router as companies_router
+from app.api.agent import router as agent_router
+
+
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -56,7 +59,7 @@ app.add_middleware(
 app.include_router(scrape_router,    prefix="/api")
 app.include_router(companies_router, prefix="/api")
 
-
+app.include_router(agent_router, prefix="/api/agent")
 @app.get("/", tags=["Health"])
 def root():
     return {"status": "ok", "message": "APII Scraper API is running"}

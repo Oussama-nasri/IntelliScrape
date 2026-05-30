@@ -656,6 +656,212 @@ function initCsvUpload() {
     }
   });
 }
+
+function initAgent() {
+  const thread   = document.getElementById("agent-thread");
+  const input    = document.getElementById("agent-input");
+  const sendBtn  = document.getElementById("btn-agent-send");
+
+  if (!thread || !input || !sendBtn) return;   // view not present
+
+  // Auto-grow textarea as the user types
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 112) + "px";
+  });
+
+  // Send on button click
+  sendBtn.addEventListener("click", handleSend);
+
+  // Send on Ctrl+Enter / Cmd+Enter
+  input.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      handleSend();
+    }
+  });
+
+  // ── Core send handler ─────────────────────────────────────────────────
+  async function handleSend() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    // Disable controls while waiting
+    sendBtn.disabled = true;
+    input.disabled   = true;
+
+    // Append user bubble
+    appendUserMessage(text);
+    input.value      = "";
+    input.style.height = "auto";
+
+    // Show typing indicator
+    const typingEl = appendTypingIndicator();
+
+    try {
+      const data = await apiFetch("/api/agent/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+
+      typingEl.remove();
+      appendAgentMessage(data.answer, data.companies || [], data.sql_used || "");
+    } catch (err) {
+      typingEl.remove();
+      toast("Agent error: " + (err.message || "Unknown error"), "error");
+      appendAgentMessage(
+        "Sorry, something went wrong. Please try again.",
+        [],
+        ""
+      );
+    } finally {
+      sendBtn.disabled = false;
+      input.disabled   = false;
+      input.focus();
+    }
+  }
+
+  // ── DOM helpers ───────────────────────────────────────────────────────
+
+  /** Appends a user message bubble and scrolls into view. */
+  function appendUserMessage(text) {
+    const msg = document.createElement("div");
+    msg.className = "msg msg--user";
+    msg.innerHTML = `<div class="msg-body"><p>${escapeHtml(text)}</p></div>`;
+    thread.appendChild(msg);
+    scrollThread();
+  }
+
+  /**
+   * Appends an agent message bubble with optional company chips and SQL block.
+   * @param {string} answer - The natural-language answer.
+   * @param {Array}  companies - Array of company objects from the API.
+   * @param {string} sqlUsed - The SQL query that was executed.
+   */
+  function appendAgentMessage(answer, companies, sqlUsed) {
+    const msg = document.createElement("div");
+    msg.className = "msg msg--agent";
+
+    const bodyEl = document.createElement("div");
+    bodyEl.className = "msg-body";
+
+    // Answer text (supports newlines)
+    const answerP = document.createElement("p");
+    answerP.innerHTML = escapeHtml(answer).replace(/\n/g, "<br>");
+    bodyEl.appendChild(answerP);
+
+    // Company chips (up to 20 shown, then "+N more")
+    if (companies.length > 0) {
+      bodyEl.appendChild(buildCompanyChips(companies));
+    }
+
+    // SQL disclosure
+    if (sqlUsed) {
+      bodyEl.appendChild(buildSqlDisclosure(sqlUsed));
+    }
+
+    msg.appendChild(bodyEl);
+    thread.appendChild(msg);
+    scrollThread();
+  }
+
+  /** Appends animated typing indicator and returns the element. */
+  function appendTypingIndicator() {
+    const msg = document.createElement("div");
+    msg.className = "msg msg--agent msg--typing";
+    msg.innerHTML = `
+      <div class="msg-body">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>`;
+    thread.appendChild(msg);
+    scrollThread();
+    return msg;
+  }
+
+  /** Builds the company chip container. */
+  function buildCompanyChips(companies) {
+    const MAX_CHIPS = 20;
+    const container = document.createElement("div");
+    container.className = "msg-companies";
+
+    const visible = companies.slice(0, MAX_CHIPS);
+
+    visible.forEach((c) => {
+      const chip = document.createElement("span");
+      chip.className = "company-chip";
+
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "chip-name";
+      nameSpan.textContent = c.name || "—";
+
+      const govSpan = document.createElement("span");
+      govSpan.className = "chip-gov";
+      govSpan.textContent = c.governorate ? `· ${c.governorate}` : "";
+
+      chip.appendChild(nameSpan);
+      chip.appendChild(govSpan);
+
+      if (c.linkedin_url) {
+        const link = document.createElement("a");
+        link.href   = c.linkedin_url;
+        link.target = "_blank";
+        link.rel    = "noopener noreferrer";
+        link.textContent = "in";
+        link.title  = "LinkedIn";
+        chip.appendChild(link);
+      }
+
+      container.appendChild(chip);
+    });
+
+    if (companies.length > MAX_CHIPS) {
+      const overflow = document.createElement("span");
+      overflow.className = "chip-overflow";
+      overflow.textContent = `+${companies.length - MAX_CHIPS} more`;
+      container.appendChild(overflow);
+    }
+
+    return container;
+  }
+
+  /** Builds the collapsible SQL <details> block. */
+  function buildSqlDisclosure(sql) {
+    const details = document.createElement("details");
+    details.className = "sql-disclosure";
+
+    const summary = document.createElement("summary");
+    summary.textContent = "SQL ›";
+
+    const pre = document.createElement("pre");
+    pre.textContent = sql;
+
+    details.appendChild(summary);
+    details.appendChild(pre);
+    return details;
+  }
+
+  /** Scrolls the thread to the latest message. */
+  function scrollThread() {
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  /**
+   * Minimal HTML escaping — prevents XSS from company data or answers.
+   * Full sanitisation is handled server-side; this is a client-side guard.
+   */
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+}
+
+
 // ── Boot ─────────────────────────────────────────────────────
 function init() {
   initNav();
@@ -665,6 +871,7 @@ function init() {
   initStats();
   initModal();
   initCsvUpload();
+  initAgent();
   // Health check on load and every 30s
   checkHealth();
   setInterval(checkHealth, 30_000);

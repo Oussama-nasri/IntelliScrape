@@ -20,3 +20,5 @@ pandas==2.2.2
 
 # Utils
 python-dotenv==1.0.1
+
+groq==0.9.0
