@@ -1,0 +1,43 @@
+services:
+
+  # ── MySQL database ─────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.4
+    container_name: apii_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE:      scraper_db
+      MYSQL_USER:          scraper
+      MYSQL_PASSWORD:      scraper
+    ports:
+      - "3306:3306"       # expose so you can connect with DBeaver / TablePlus
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "scraper", "-pscraper"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ── Scraper API ────────────────────────────────────────────────────────────
+  api:
+    build: .
+    container_name: apii_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "mysql+pymysql://scraper:scraper@db:3306/scraper_db"
+      OUTPUT_DIR:   "/app/output"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./output:/app/output
+      - .:/app
+    shm_size: "2gb"
+
+volumes:
+  mysql_data:

@@ -1,14 +1,22 @@
-requests
-httpx
-beautifulsoup4
-lxml
-selenium
-webdriver-manager
-pandas
-apify-client
-serpapi
-python-dotenv
-playwright
-playwright_stealth
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
 
-fake-useragent
+sqlalchemy==2.0.30
+pymysql==1.1.1
+cryptography==42.0.7
+
+requests==2.32.2
+beautifulsoup4==4.12.3
+lxml==5.2.2
+
+playwright==1.44.0
+fake-useragent==1.5.1
+
+
+selenium==4.21.0
+
+# Data
+pandas==2.2.2
+
+# Utils
+python-dotenv==1.0.1

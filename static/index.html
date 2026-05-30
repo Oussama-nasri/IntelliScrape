@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>APII Scraper — Control Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Scanline overlay ── -->
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-mark">▣</span>
+      <span class="logo-text">APII<br><em>SCRAPER</em></span>
+    </div>
+
+    <ul class="nav-links">
+      <li><a href="#" class="nav-item active" data-view="pipeline">
+        <span class="nav-icon">⬡</span> Pipeline
+      </a></li>
+      <li><a href="#" class="nav-item" data-view="jobs">
+        <span class="nav-icon">◎</span> Jobs
+        <span class="badge" id="running-badge" style="display:none">0</span>
+      </a></li>
+      <li><a href="#" class="nav-item" data-view="explorer">
+        <span class="nav-icon">⊞</span> Explorer
+      </a></li>
+      <li><a href="#" class="nav-item" data-view="stats">
+        <span class="nav-icon">◈</span> Stats
+      </a></li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="api-indicator">
+        <span class="dot" id="api-dot"></span>
+        <span id="api-status-text">checking…</span>
+      </div>
+      <div class="api-url-wrapper">
+        <label>API BASE URL</label>
+        <input id="api-base-url" type="text" value="http://localhost:8000" />
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main content ── -->
+  <main class="content">
+
+    <!-- ══ PIPELINE VIEW ══════════════════════════════════════════════════ -->
+    <section class="view active" id="view-pipeline">
+      <header class="view-header">
+        <div>
+          <h1>Pipeline Control</h1>
+          <p class="subtitle">Trigger scraping stages individually or run the full pipeline end-to-end.</p>
+        </div>
+        <div class="header-meta">
+          <span class="mono">v2.0</span>
+        </div>
+      </header>
+
+      <!-- Full pipeline card -->
+      <div class="card card--accent" id="card-pipeline">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="stage-number">★</span>
+            <div>
+              <h2>Full Pipeline</h2>
+              <p>Stages 1 → 2 → 3 sequentially in one job</p>
+            </div>
+          </div>
+          <span class="tag tag--gold">RECOMMENDED</span>
+        </div>
+        <div class="card-body">
+          <div class="field-row">
+            <div class="field">
+              <label>Sector (optional)</label>
+              <input type="text" id="pipeline-sector" placeholder="e.g. 08  — leave blank for all" />
+            </div>
+            <div class="field field--toggle">
+              <label>Export CSV</label>
+              <label class="toggle">
+                <input type="checkbox" id="pipeline-csv" checked />
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn--primary" id="btn-pipeline">
+            <span class="btn-icon">▶</span> Run Full Pipeline
+          </button>
+          <span class="card-hint">Estimated time: 30–90 min depending on dataset size</span>
+        </div>
+      </div>
+
+      <!-- Stage cards row -->
+      <div class="stages-grid">
+        <!-- CSV Import card -->
+<div class="card" style="margin-top:24px">
+  <div class="card-header">
+    <div class="card-title-group">
+      <span class="stage-number">↑</span>
+      <div>
+        <h2>Import CSV</h2>
+        <p>Load an existing CSV file directly into the database</p>
+      </div>
+    </div>
+    <span class="tag">IMPORT</span>
+  </div>
+  <div class="card-body">
+    <div class="field">
+      <label>CSV File</label>
+      <input type="file" id="csv-file-input" accept=".csv"
+             style="background:var(--surface-3);border:1px solid var(--border-2);
+                    border-radius:4px;padding:8px 12px;color:var(--text);
+                    font-family:var(--font-mono);font-size:12px;width:100%;cursor:pointer" />
+    </div>
+    <p style="font-size:11px;color:var(--text-dim);margin-top:10px">
+      Recognised columns: <code style="color:var(--amber)">name</code>,
+      activity, governorate, phone, linkedin_url, website, description,
+      size, sector, headquarters, company_type, founded.
+      Existing rows (matched by name + governorate) are updated, not duplicated.
+    </p>
+  </div>
+  <div class="card-footer">
+    <button class="btn btn--stage" id="btn-upload-csv">
+      <span class="btn-icon">↑</span> Upload &amp; Import
+    </button>
+    <span class="card-hint" id="upload-result"></span>
+  </div>
+</div>
+        <!-- Stage 1 -->
+        <div class="card" id="card-industrial">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="stage-number">01</span>
+              <div>
+                <h2>APII Industrial</h2>
+                <p>Scrape directory pages</p>
+              </div>
+            </div>
+            <span class="tag">STAGE 1</span>
+          </div>
+          <div class="card-body">
+            <div class="field-row">
+              <div class="field">
+                <label>Sector code</label>
+                <input type="text" id="ind-sector" placeholder="e.g. 08  — blank = all" />
+              </div>
+              <div class="field field--toggle">
+                <label>Export CSV</label>
+                <label class="toggle">
+                  <input type="checkbox" id="ind-csv" checked />
+                  <span class="toggle-track"></span>
+                </label>
+              </div>
+            </div>
+            <div class="info-chips">
+              <span class="chip">Sectors: 01–09</span>
+              <span class="chip">Source: tunisieindustrie.nat.tn</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn--stage" id="btn-industrial">
+              <span class="btn-icon">▶</span> Run Stage 1
+            </button>
+          </div>
+        </div>
+
+        <!-- Stage 2 -->
+        <div class="card" id="card-linkedin-url">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="stage-number">02</span>
+              <div>
+                <h2>LinkedIn URLs</h2>
+                <p>DuckDuckGo search</p>
+              </div>
+            </div>
+            <span class="tag">STAGE 2</span>
+          </div>
+          <div class="card-body">
+            <div class="stage-prereq">
+              <span class="prereq-icon">↑</span>
+              Requires companies at stage <code>scraped</code>
+            </div>
+            <div class="info-chips">
+              <span class="chip">Engine: DuckDuckGo HTML</span>
+              <span class="chip">Browser: Playwright</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn--stage" id="btn-linkedin-urls">
+              <span class="btn-icon">▶</span> Run Stage 2
+            </button>
+          </div>
+        </div>
+
+        <!-- Stage 3 -->
+        <div class="card" id="card-linkedin-enrich">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="stage-number">03</span>
+              <div>
+                <h2>LinkedIn Enrich</h2>
+                <p>Profile data extraction</p>
+              </div>
+            </div>
+            <span class="tag">STAGE 3</span>
+          </div>
+          <div class="card-body">
+            <div class="stage-prereq">
+              <span class="prereq-icon">↑</span>
+              Requires companies at stage <code>linkedin_found</code>
+            </div>
+            <div class="info-chips">
+              <span class="chip">Browser: Selenium</span>
+              <span class="chip">Restart every 25 co.</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn--stage" id="btn-linkedin-enrich">
+              <span class="btn-icon">▶</span> Run Stage 3
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Toast notification -->
+      <div id="toast" class="toast" aria-live="polite"></div>
+    </section>
+
+
+    <!-- ══ JOBS VIEW ═════════════════════════════════════════════════════ -->
+    <section class="view" id="view-jobs">
+      <header class="view-header">
+        <div>
+          <h1>Job Monitor</h1>
+          <p class="subtitle">Live status of all background scraping tasks.</p>
+        </div>
+        <div class="header-actions">
+          <label class="toggle-label">
+            <label class="toggle">
+              <input type="checkbox" id="auto-refresh" checked />
+              <span class="toggle-track"></span>
+            </label>
+            Auto-refresh
+          </label>
+          <button class="btn btn--ghost" id="btn-refresh-jobs">↻ Refresh</button>
+        </div>
+      </header>
+
+      <div id="jobs-list" class="jobs-list">
+        <div class="empty-state">
+          <span class="empty-icon">◎</span>
+          <p>No jobs yet. Trigger a scraping task from the Pipeline tab.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ══ EXPLORER VIEW ═════════════════════════════════════════════════ -->
+    <section class="view" id="view-explorer">
+      <header class="view-header">
+        <div>
+          <h1>Company Explorer</h1>
+          <p class="subtitle">Query and browse the database.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn--ghost" id="btn-export-visible">↓ Export visible</button>
+        </div>
+      </header>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="filter-field filter-field--wide">
+          <label>Search</label>
+          <input type="text" id="filter-search" placeholder="Name or activity…" />
+        </div>
+        <div class="filter-field">
+          <label>Governorate</label>
+          <input type="text" id="filter-gov" placeholder="e.g. Tunis" />
+        </div>
+        <div class="filter-field">
+          <label>Stage</label>
+          <select id="filter-stage">
+            <option value="">All</option>
+            <option value="scraped">scraped</option>
+            <option value="linkedin_found">linkedin_found</option>
+            <option value="linkedin_enriched">linkedin_enriched</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label>LinkedIn</label>
+          <select id="filter-linkedin">
+            <option value="">All</option>
+            <option value="true">Has URL</option>
+            <option value="false">Missing</option>
+          </select>
+        </div>
+        <button class="btn btn--primary" id="btn-search">Search</button>
+        <button class="btn btn--ghost" id="btn-reset-filters">Reset</button>
+      </div>
+
+      <!-- Results meta -->
+      <div class="results-meta" id="results-meta">—</div>
+
+      <!-- Table -->
+      <div class="table-wrapper">
+        <table class="data-table" id="companies-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Activity</th>
+              <th>Governorate</th>
+              <th>Phone</th>
+              <th>LinkedIn</th>
+              <th>Stage</th>
+              <th>Size</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="companies-tbody">
+            <tr class="placeholder-row">
+              <td colspan="9">Run a search to see results.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+    </section>
+
+
+    <!-- ══ STATS VIEW ════════════════════════════════════════════════════ -->
+    <section class="view" id="view-stats">
+      <header class="view-header">
+        <div>
+          <h1>Statistics</h1>
+          <p class="subtitle">Aggregate snapshot of the scraped dataset.</p>
+        </div>
+        <button class="btn btn--ghost" id="btn-refresh-stats">↻ Refresh</button>
+      </header>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card skeleton"></div>
+        <div class="stat-card skeleton"></div>
+        <div class="stat-card skeleton"></div>
+        <div class="stat-card skeleton"></div>
+      </div>
+
+      <div class="stats-lower">
+        <div class="card">
+          <div class="card-header"><h2>Pipeline Progress</h2></div>
+          <div class="card-body">
+            <div id="stage-bars"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Top Governorates</h2></div>
+          <div class="card-body">
+            <div id="gov-bars"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Company detail modal ── -->
+  <div class="modal-backdrop" id="modal-backdrop" style="display:none">
+    <div class="modal" id="company-modal">
+      <button class="modal-close" id="modal-close">✕</button>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

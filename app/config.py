@@ -1,5 +1,3 @@
-# config.py — Central configuration for all scrapers
-
 import os
 
 # ── URLs ──────────────────────────────────────────────────────────────────────
