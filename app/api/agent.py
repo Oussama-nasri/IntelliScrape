@@ -15,7 +15,10 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from groq import Groq
+from dotenv import load_dotenv
 
+
+load_dotenv()
 from app.db.session import get_db
 
 logger = logging.getLogger(__name__)
